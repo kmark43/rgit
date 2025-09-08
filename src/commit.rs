@@ -5,6 +5,8 @@ use std::io::{BufReader};
 use flate2::read::ZlibDecoder;
 use std::fmt;
 
+use crate::object_finder;
+
 pub struct Commit {
     pub tree: String,
     pub parent: String,
@@ -97,5 +99,10 @@ impl Commit {
             bytes.extend_from_slice(&buffer[..bytes_read]);
         }
         Self::from_bytes(&bytes)
+    }
+
+    pub fn from_hash(hash: &str) -> Self {
+        let path = object_finder::find_object_path(hash);
+        Self::from_file(Path::new(&path))
     }
 }
