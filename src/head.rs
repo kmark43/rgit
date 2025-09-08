@@ -13,8 +13,7 @@ impl Head {
     }
 
     pub fn from_file(path: &PathBuf) -> Self {
-        let ref_path = PathBuf::from(path);
-        let file = File::open(path).unwrap();
+        let file = File::open(&path).unwrap();
         let mut reader = BufReader::new(file);
         let mut buffer = [0; 1024];
         let mut bytes: Vec<u8> = Vec::new();
@@ -25,7 +24,7 @@ impl Head {
             }
             bytes.extend_from_slice(&buffer[..bytes_read]);
         }
-        Self::new(ref_path, String::from_utf8_lossy(&bytes).to_string())
+        Self::new(PathBuf::from(path), String::from_utf8_lossy(&bytes).trim().to_string())
     }
 
     pub fn from_branch(branch: &str) -> Self {
@@ -45,6 +44,8 @@ impl Head {
             }
             bytes.extend_from_slice(&buffer[..bytes_read]);
         }
-        Self::from_file(&PathBuf::from(format!(".git/{}", &String::from_utf8_lossy(&bytes)[5..])))
+        let ref_path = &String::from_utf8_lossy(&bytes)[5..];
+        let ref_path = ref_path.trim();
+        Self::from_file(&PathBuf::from(format!(".git/{}", ref_path.to_string())))
     }
 }

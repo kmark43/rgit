@@ -9,7 +9,7 @@ use crate::object_finder;
 
 pub struct Commit {
     pub tree: String,
-    pub parent: String,
+    pub parent: Option<String>,
     pub author: String,
     pub committer: String,
     pub message: String,
@@ -19,14 +19,14 @@ pub struct Commit {
 
 impl fmt::Display for Commit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Commit: Parent: {}, Author: {}, Committer: {}, Message: {}, Timestamp: {}, \
+        write!(f, "Commit: Parent: {:?}, Author: {}, Committer: {}, Message: {}, Timestamp: {}, \
             Timezone: {}", self.parent, self.author, self.committer, self.message, self.timestamp,
             self.timezone)
     }
 }
 
 impl Commit {
-    pub fn new(tree: String, parent: String, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
+    pub fn new(tree: String, parent: Option<String>, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
         Self { tree, parent, author, committer, message, timestamp, timezone }
     }
 
@@ -35,7 +35,7 @@ impl Commit {
         let lines: Vec<&str> = content.lines().collect();
         
         let mut tree = String::new();
-        let mut parent = String::new();
+        let mut parent: Option<String> = None;
         let mut author = String::new();
         let mut committer = String::new();
         let mut message = String::new();
@@ -54,7 +54,7 @@ impl Commit {
             } else if line.starts_with("tree ") {
                 tree = line[5..].to_string();
             } else if line.starts_with("parent ") {
-                parent = line[7..].to_string();
+                parent = Some(line[7..].to_string());
             } else if line.starts_with("author ") {
                 let author_line = &line[7..];
                 if let Some(space_pos) = author_line.rfind(' ') {
