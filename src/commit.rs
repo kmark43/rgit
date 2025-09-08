@@ -19,13 +19,15 @@ pub struct Commit {
 
 impl fmt::Display for Commit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Commit: Hash: {}, Parent: {:?}, Author: {}, Committer: {}, Message: {}, Timestamp: {}, \
-            Timezone: {}", self.hash, self.parent, self.author, self.committer, self.message, self.timestamp,
-            self.timezone)
+        write!(f, "commit {}", self.hash)
     }
 }
 
 impl Commit {
+    pub fn format_log(&self) -> String {
+        format!("commit {}\nAuthor: {}\nDate:   {}\n\n    {}", 
+                self.hash, self.author, self.timestamp, self.message)
+    }
     pub fn new(hash: String, tree: String, parent: Option<String>, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
         Self { hash,tree, parent, author, committer, message, timestamp, timezone }
     }
