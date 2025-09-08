@@ -1,6 +1,5 @@
 use std::fs::File;
 use std::io::{Read};
-use std::path::Path;
 use std::io::{BufReader};
 use flate2::read::ZlibDecoder;
 use std::fmt;
@@ -8,6 +7,7 @@ use std::fmt;
 use crate::object_finder;
 
 pub struct Commit {
+    pub hash: String,
     pub tree: String,
     pub parent: Option<String>,
     pub author: String,
@@ -19,18 +19,18 @@ pub struct Commit {
 
 impl fmt::Display for Commit {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Commit: Parent: {:?}, Author: {}, Committer: {}, Message: {}, Timestamp: {}, \
-            Timezone: {}", self.parent, self.author, self.committer, self.message, self.timestamp,
+        write!(f, "Commit: Hash: {}, Parent: {:?}, Author: {}, Committer: {}, Message: {}, Timestamp: {}, \
+            Timezone: {}", self.hash, self.parent, self.author, self.committer, self.message, self.timestamp,
             self.timezone)
     }
 }
 
 impl Commit {
-    pub fn new(tree: String, parent: Option<String>, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
-        Self { tree, parent, author, committer, message, timestamp, timezone }
+    pub fn new(hash: String, tree: String, parent: Option<String>, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
+        Self { hash,tree, parent, author, committer, message, timestamp, timezone }
     }
 
-    pub fn from_bytes(bytes: &[u8]) -> Self {
+    pub fn from_bytes(hash: &str, bytes: &[u8]) -> Self {
         let content = String::from_utf8_lossy(bytes);
         let lines: Vec<&str> = content.lines().collect();
         
@@ -82,10 +82,11 @@ impl Commit {
             message.pop();
         }
         
-        Self { tree, parent, author, committer, message, timestamp, timezone }
+        Self { hash: hash.to_string(), tree, parent, author, committer, message, timestamp, timezone }
     }
 
-    pub fn from_file(path: &Path) -> Self {
+    pub fn from_hash(hash: &str) -> Self {
+        let path = object_finder::find_object_path(hash);
         let file = File::open(path).unwrap();
         let mut reader = BufReader::new(file);
         let mut decompressor = ZlibDecoder::new(&mut reader);
@@ -98,11 +99,6 @@ impl Commit {
             }
             bytes.extend_from_slice(&buffer[..bytes_read]);
         }
-        Self::from_bytes(&bytes)
-    }
-
-    pub fn from_hash(hash: &str) -> Self {
-        let path = object_finder::find_object_path(hash);
-        Self::from_file(Path::new(&path))
+        Self::from_bytes(hash, &bytes)
     }
 }
