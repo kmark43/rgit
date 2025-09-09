@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{Read};
 use std::io::{BufReader};
+use chrono::{Local, TimeZone, Utc};
 use flate2::read::ZlibDecoder;
 use std::fmt;
 
@@ -25,8 +26,11 @@ impl fmt::Display for Commit {
 
 impl Commit {
     pub fn format_log(&self) -> String {
+        let date = Utc.timestamp_opt(self.timestamp.parse::<i64>().unwrap(), 0).unwrap();
+        let tzdate = date.with_timezone(&Local);
+        let format_date = tzdate.format("%a %b %d %H:%M:%S %Y %z").to_string();
         format!("commit {}\nAuthor: {}\nDate:   {}\n\n    {}", 
-                self.hash, self.author, self.timestamp, self.message)
+                self.hash, self.author, format_date, self.message)
     }
     pub fn new(hash: String, tree: String, parent: Option<String>, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
         Self { hash,tree, parent, author, committer, message, timestamp, timezone }
