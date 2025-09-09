@@ -4,7 +4,7 @@ use std::process;
 mod commit;
 mod object_finder;
 mod head;
-mod log;
+mod command;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,6 +13,6 @@ fn main() {
         process::exit(1);
     }
     if args[1] == "log" {
-        log::log(&args);
+        command::log::log(&args);
     }
 }
