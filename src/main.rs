@@ -15,4 +15,7 @@ fn main() {
     if args[1] == "log" {
         command::log::log(&args);
     }
+    else if args[1] == "cat-file" {
+        object::blob::Blob::from_hash(&args[2]);
+    }
 }
