@@ -4,6 +4,7 @@ use std::io::{BufReader};
 use chrono::{Local, TimeZone, Utc};
 use flate2::read::ZlibDecoder;
 use std::fmt;
+use colored::*;
 
 use crate::object_finder;
 
@@ -29,8 +30,8 @@ impl Commit {
         let date = Utc.timestamp_opt(self.timestamp.parse::<i64>().unwrap(), 0).unwrap();
         let tzdate = date.with_timezone(&Local);
         let format_date = tzdate.format("%a %b %d %H:%M:%S %Y %z").to_string();
-        format!("commit {}\nAuthor: {}\nDate:   {}\n\n    {}", 
-                self.hash, self.author, format_date, self.message)
+        format!("{} {}\nAuthor: {}\nDate:   {}\n\n    {}\n", 
+                "commit".yellow(), self.hash.yellow(), self.author, format_date, self.message)
     }
     pub fn new(hash: String, tree: String, parent: Option<String>, author: String, committer: String, message: String, timestamp: String, timezone: String) -> Self {
         Self { hash,tree, parent, author, committer, message, timestamp, timezone }
