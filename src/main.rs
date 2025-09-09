@@ -1,7 +1,7 @@
 use std::env;
 use std::process;
 
-mod commit;
+mod object;
 mod object_finder;
 mod head;
 mod command;

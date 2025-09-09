@@ -1,6 +1,6 @@
 use std::process;
 use crate::head;
-use crate::commit;
+use crate::object::commit;
 
 pub fn log(args: &Vec<String>) {
     if args.len() != 2 {
