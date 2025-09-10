@@ -2,8 +2,6 @@ use crate::object_finder;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use flate2::read::ZlibDecoder;
-use sha1::{Sha1, Digest};
-use hex;
 
 pub struct Blob {
     pub hash: String,
