@@ -1,6 +1,8 @@
 use std::env;
 use std::process;
 
+use crate::object::tree::Tree;
+
 mod object;
 mod object_finder;
 mod head;
@@ -17,5 +19,9 @@ fn main() {
     // }
     if args[1] == "checkout" {
         command::checkout::checkout(&args);
+    } else if args[1] == "ls-tree" {
+        Tree::from_hash(&args[2]);
+    } else if args[1] == "ls-tree-folder" {
+        Tree::hash_folder(&args[2], true);
     }
 }

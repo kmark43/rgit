@@ -19,7 +19,7 @@ fn read_dir_to_set(dir: &str) -> HashSet<String> {
         if path.is_file() {
             dir_files.insert(format!("{}-{}", entry.file_name().to_string_lossy().to_string(), compute_file_hash(&path.to_string_lossy())));
         } else {
-            dir_files.insert(format!("{}-{}", entry.file_name().to_string_lossy().to_string(), Tree::hash_folder(entry.path().to_string_lossy().as_ref())));
+            dir_files.insert(format!("{}-{}", entry.file_name().to_string_lossy().to_string(), Tree::hash_folder(entry.path().to_string_lossy().as_ref(), false)));
         }
         println!("{}", path.display());
     }

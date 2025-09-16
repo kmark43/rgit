@@ -1,6 +1,7 @@
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
 use std::os::unix::fs::PermissionsExt;
+use bstr::ByteVec;
 use flate2::read::ZlibDecoder;
 use sha1::{Sha1, Digest};
 
@@ -53,6 +54,7 @@ impl Tree {
             }
             bytes.extend_from_slice(&buffer[..bytes_read]);
         }
+        println!("{}", String::from_utf8_lossy(&bytes));
         let mut entries = Vec::new();
         let mut i = bytes.iter().position(|&x| x == b'\0').unwrap() + 1;
         while i < bytes.len() {
@@ -62,43 +64,56 @@ impl Tree {
         Self::new(hash.to_string(), entries)
     }
 
-    fn write_dir_entry(entry: &TreeEntry) -> String {
-        format!("{} {}\0{}\n", entry.mode, entry.name, String::from_utf8_lossy(&hex::decode(&entry.hash).unwrap()))
+    fn write_dir_entry(entry: &TreeEntry) -> Vec<u8> {
+        // format!("{} {}\0{}", entry.mode, entry.name, String::from_utf8_lossy(&hex::decode(&entry.hash).unwrap()))
+        let mut entry_bytes = Vec::new();
+        entry_bytes.extend_from_slice(entry.mode.as_bytes());
+        entry_bytes.push(b' ');
+        entry_bytes.extend_from_slice(entry.name.as_bytes());
+        entry_bytes.push(b'\0');
+        entry_bytes.extend_from_slice(&hex::decode(&entry.hash).unwrap());
+        entry_bytes
     }
 
     fn read_dir_entry(entry: &fs::DirEntry) -> TreeEntry {
         let path = entry.path();
         if path.is_file() {
             let permissions = fs::metadata(&path).unwrap().permissions().mode();
-            let mode = format!("{}", permissions);
+            let mode = format!("{:o}", permissions);
             let name = entry.file_name().to_string_lossy().to_string();
             let hash = compute_file_hash(&path.to_string_lossy());
             TreeEntry::new(mode, name, hash)
         } else {
             let permissions = fs::metadata(&path).unwrap().permissions().mode();
-            let mode = format!("{}", permissions);
-            println!("{}", format!("{}/{}", path.to_string_lossy(), entry.file_name().to_string_lossy()));
+            let mode = format!("{:o}", permissions);
             let name = entry.file_name().to_string_lossy().to_string();
-            let hash = Tree::hash_folder(&entry.path().to_string_lossy());
+            let hash = Tree::hash_folder(&entry.path().to_string_lossy(), false);
             TreeEntry::new(mode, name, hash)
         }
     }
     
-    pub fn hash_folder(folder: &str) -> String {
+    pub fn hash_folder(folder: &str, show_tree: bool) -> String {
         let mut hash = Sha1::new();
-        let mut tree_string = String::new();
+        let mut tree_bytes = Vec::new();
         let mut entries = Vec::new();
         for entry in fs::read_dir(folder).unwrap() {
             let entry = entry.unwrap();
+            if vec![".git", "target"].contains(&entry.file_name().to_string_lossy().as_ref()) {
+                continue;
+            }
             let entry = Tree::read_dir_entry(&entry);
             entries.push(entry);
         }
+        entries.sort_by(|a, b| a.name.cmp(&b.name));
         for entry in entries {
-            tree_string.push_str(&Tree::write_dir_entry(&entry));
+            tree_bytes.extend_from_slice(&Tree::write_dir_entry(&entry));
         }
-        tree_string.insert_str(0, &format!("tree {}\0", tree_string.len()));
-        println!("{}", tree_string);
-        hash.update(tree_string);
+        let header = format!("tree {}\0", tree_bytes.len());
+        tree_bytes.insert_str(0, header);
+        if show_tree {
+            println!("{}", String::from_utf8_lossy(&tree_bytes));
+        }
+        hash.update(tree_bytes);
         hex::encode(hash.finalize())
     }
 }
