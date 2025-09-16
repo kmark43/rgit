@@ -78,11 +78,11 @@ impl Tree {
     fn read_dir_entry(entry: &fs::DirEntry) -> TreeEntry {
         let path = entry.path();
         if path.is_file() {
-            let permissions = fs::metadata(&path).unwrap().permissions().mode();
-            let mode = format!("{:o}", permissions);
+            let executable = is_executable::is_executable(&path);
+            let mode = if executable { "100755" } else { "100644" };
             let name = entry.file_name().to_string_lossy().to_string();
             let hash = compute_file_hash(&path.to_string_lossy());
-            TreeEntry::new(mode, name, hash)
+            TreeEntry::new(mode.to_string(), name, hash)
         } else {
             let permissions = fs::metadata(&path).unwrap().permissions().mode();
             let mode = format!("{:o}", permissions);
