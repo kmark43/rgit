@@ -1,11 +1,13 @@
 use std::process;
+
 use crate::head;
+use crate::object::blob::compute_file_hash;
 use crate::object::commit;
 use crate::object::tree;
 use std::collections::HashSet;
 
-fn read_dir_to_set() -> HashSet<String> {
-    let dir = std::fs::read_dir(".").unwrap();
+fn read_dir_to_set(dir: &str) -> HashSet<String> {
+    let dir = std::fs::read_dir(dir).unwrap();
     let mut dir_files = HashSet::<String>::new();
     for entry in dir {
         let entry = entry.unwrap();
@@ -13,15 +15,20 @@ fn read_dir_to_set() -> HashSet<String> {
         if vec![".git", "target"].contains(&path.file_name().unwrap().to_string_lossy().as_ref()) {
             continue;
         }
-        dir_files.insert(entry.file_name().to_string_lossy().to_string());
+        if path.is_file() {
+            dir_files.insert(format!("{}-{}", entry.file_name().to_string_lossy().to_string(), compute_file_hash(&path.to_string_lossy())));
+        } else {
+            dir_files.insert(entry.file_name().to_string_lossy().to_string());
+        }
         println!("{}", path.display());
     }
     dir_files
 }
 
 fn load_dir(tree: &tree::Tree) {
-    let treeFiles = tree.entries.iter().map(|entry| entry.name.clone()).collect::<HashSet<String>>();
-    let dirFiles = read_dir_to_set();
+    let treeFiles = tree.entries.iter().map(|entry| format!("{}-{}", entry.name.clone(), entry.hash.clone())).collect::<HashSet<String>>();
+    println!("{:?}", treeFiles);
+    let dirFiles = read_dir_to_set(".");
     let newFiles = &treeFiles - &dirFiles;
     let deleteFiles = &dirFiles - &treeFiles;
     println!("{:?}", newFiles);

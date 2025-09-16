@@ -1,7 +1,9 @@
 use crate::object_finder;
 use std::fs::File;
-use std::io::{BufReader, Read};
+use std::io::{BufRead, BufReader, Read};
 use flate2::read::ZlibDecoder;
+use sha1::{ Sha1, Digest };
+use std::fs;
 
 pub struct Blob {
     pub hash: String,
@@ -32,4 +34,27 @@ impl Blob {
         bytes = bytes[null_pos.unwrap() + 1..].to_vec();
         Self::new(hash.to_string(), bytes)
     }
+}
+
+pub fn compute_file_hash(path: &str) -> String {
+    let metadata = fs::metadata(path).unwrap();
+    let mut sha1 = Sha1::new();
+    let file = File::open(&path).unwrap();
+    let mut reader = BufReader::new(file);
+    
+    let header = format!("blob {}\0", metadata.len());;
+    sha1.update(header);
+
+    loop {
+        let buffer = reader.fill_buf().unwrap();
+        if buffer.is_empty() {
+            break;
+        }
+        sha1.update(buffer);
+        let bytes_read = buffer.len();
+        reader.consume(bytes_read);
+    }
+    let hash = sha1.finalize();
+    println!("{}", hex::encode(&hash));
+    hex::encode(&hash)
 }

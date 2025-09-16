@@ -52,7 +52,6 @@ impl Commit {
         let mut in_message = false;
         
         for line in lines {
-            println!("{}", line);
             if in_message {
                 message.push_str(line);
                 message.push('\n');
@@ -60,14 +59,12 @@ impl Commit {
                 // Handle case where commit and tree are on the same line
                 // Format: "commit 256tree ff63d4cfd34fa7fa36d42aa90e55ae7cefad0f17"
                 let commit_line = &line[7..]; // Remove "commit " prefix
-                println!("Commit line {}", commit_line);
                 if commit_line.starts_with("tree ") {
                     tree = commit_line[5..].to_string(); // Remove "tree " prefix
                 } else {
                     // Check if it's in the format "commit <number>tree <hash>"
                     // Find where "tree" starts after the number
                     for i in 1..commit_line.len() {
-                        println!("Tree line {}", &commit_line[i..]);
                         if commit_line[i..].starts_with("tree ") {
                             tree = commit_line[i + 5..].to_string(); // Remove "tree " prefix
                             break;
