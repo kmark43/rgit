@@ -111,6 +111,10 @@ impl Tree {
             println!("{}", String::from_utf8_lossy(&tree_bytes));
         }
         hash.update(tree_bytes);
-        hex::encode(hash.finalize())
+        let hash = hash.finalize();
+        if show_tree {
+            println!("hash: {}", hex::encode(&hash));
+        }
+        hex::encode(&hash)
     }
 }
