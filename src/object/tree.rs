@@ -63,23 +63,23 @@ impl Tree {
     }
 
     fn write_dir_entry(entry: &TreeEntry) -> String {
-        format!("{} {}\0{}", entry.mode, entry.name, String::from_utf8_lossy(&hex::decode(&entry.hash).unwrap()))
+        format!("{} {}\0{}\n", entry.mode, entry.name, String::from_utf8_lossy(&hex::decode(&entry.hash).unwrap()))
     }
 
-    fn read_dir_entry(path: &str, entry: &fs::DirEntry) -> TreeEntry {
+    fn read_dir_entry(entry: &fs::DirEntry) -> TreeEntry {
         let path = entry.path();
         if path.is_file() {
             let permissions = fs::metadata(&path).unwrap().permissions().mode();
             let mode = format!("{}", permissions);
-            let name = path.to_string_lossy().to_string();
+            let name = entry.file_name().to_string_lossy().to_string();
             let hash = compute_file_hash(&path.to_string_lossy());
             TreeEntry::new(mode, name, hash)
         } else {
             let permissions = fs::metadata(&path).unwrap().permissions().mode();
             let mode = format!("{}", permissions);
             println!("{}", format!("{}/{}", path.to_string_lossy(), entry.file_name().to_string_lossy()));
-            let name = format!("{}/{}", path.to_string_lossy(), entry.file_name().to_string_lossy());
-            let hash = Tree::hash_folder(&path.to_string_lossy());
+            let name = entry.file_name().to_string_lossy().to_string();
+            let hash = Tree::hash_folder(&entry.path().to_string_lossy());
             TreeEntry::new(mode, name, hash)
         }
     }
@@ -90,7 +90,7 @@ impl Tree {
         let mut entries = Vec::new();
         for entry in fs::read_dir(folder).unwrap() {
             let entry = entry.unwrap();
-            let entry = Tree::read_dir_entry(&folder, &entry);
+            let entry = Tree::read_dir_entry(&entry);
             entries.push(entry);
         }
         for entry in entries {
