@@ -4,6 +4,7 @@ use crate::head;
 use crate::object::blob::compute_file_hash;
 use crate::object::commit;
 use crate::object::tree;
+use crate::object::tree::Tree;
 use std::collections::HashSet;
 
 fn read_dir_to_set(dir: &str) -> HashSet<String> {
@@ -18,7 +19,7 @@ fn read_dir_to_set(dir: &str) -> HashSet<String> {
         if path.is_file() {
             dir_files.insert(format!("{}-{}", entry.file_name().to_string_lossy().to_string(), compute_file_hash(&path.to_string_lossy())));
         } else {
-            dir_files.insert(entry.file_name().to_string_lossy().to_string());
+            dir_files.insert(format!("{}-{}", entry.file_name().to_string_lossy().to_string(), Tree::hash_folder(entry.path().to_string_lossy().as_ref())));
         }
         println!("{}", path.display());
     }

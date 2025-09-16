@@ -42,7 +42,7 @@ pub fn compute_file_hash(path: &str) -> String {
     let file = File::open(&path).unwrap();
     let mut reader = BufReader::new(file);
     
-    let header = format!("blob {}\0", metadata.len());;
+    let header = format!("blob {}\0", metadata.len());
     sha1.update(header);
 
     loop {
@@ -55,6 +55,5 @@ pub fn compute_file_hash(path: &str) -> String {
         reader.consume(bytes_read);
     }
     let hash = sha1.finalize();
-    println!("{}", hex::encode(&hash));
     hex::encode(&hash)
 }
