@@ -54,7 +54,6 @@ fn load_dir(path: &str, tree: &tree::Tree) {
                 process::exit(1);
             }
         }
-        std::fs::write(file_path, Blob::from_hash(&entry.hash).content).unwrap();
     }
 }
 
