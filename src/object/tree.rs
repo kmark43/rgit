@@ -1,11 +1,13 @@
+use std::collections::HashSet;
 use std::fs::{self, File};
 use std::io::{BufReader, Read};
-use std::os::unix::fs::PermissionsExt;
+use std::path::Path;
 use bstr::ByteVec;
 use flate2::read::ZlibDecoder;
 use sha1::{Sha1, Digest};
 
-use crate::object::blob::compute_file_hash;
+use crate::object::blob::{compute_file_hash, Blob};
+use crate::object::objectreader::ObjectReader;
 use crate::object_finder;
 
 #[derive(Debug)]
@@ -109,5 +111,63 @@ impl Tree {
         hash.update(tree_bytes);
         let hash = hash.finalize();
         hex::encode(&hash)
+    }
+
+
+
+    fn read_dir_to_set(dir: &str) -> HashSet<String> {
+        let dir = std::fs::read_dir(dir).unwrap();
+        let mut dir_files = HashSet::<String>::new();
+        for entry in dir {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if vec![".git", "target"].contains(&path.file_name().unwrap().to_string_lossy().as_ref()) {
+                continue;
+            }
+            if path.is_file() {
+                dir_files.insert(entry.file_name().to_string_lossy().to_string());
+            } else {
+                dir_files.insert(entry.file_name().to_string_lossy().to_string());
+            }
+        }
+        dir_files
+    }
+
+    pub fn sync_tree_to_dir(&self, path: &str) {
+        let tree_files = self.entries.iter().map(|entry| entry.name.clone()).collect::<HashSet<String>>();
+        let dir_files = Tree::read_dir_to_set(&path);
+        let delete_files = &dir_files - &tree_files;
+        for file in delete_files {
+            let file_path = format!("{}/{}", path, file);
+            if std::fs::metadata(&file_path).unwrap().is_dir() {
+                std::fs::remove_dir_all(file_path).unwrap();
+            } else {
+                std::fs::remove_file(file_path).unwrap();
+            }
+        }
+        for entry in self.entries.iter() {
+            if entry.name.starts_with(".git") {
+                continue;
+            }
+            let file_path = format!("{}/{}", path, entry.name.clone());
+            match ObjectReader::find_object_type(&entry.hash) {
+                "blob" => {
+                    if !Path::new(&file_path).exists() || compute_file_hash(&file_path) != entry.hash {
+                        std::fs::write(&file_path, Blob::from_hash(&entry.hash).content).unwrap();
+                    }
+                }
+                "tree" => {
+                    if !Path::new(&file_path).exists() || Tree::hash_folder(&file_path) != entry.hash {
+                        std::fs::create_dir_all(&file_path).unwrap();
+                        let tree = Tree::from_hash(&entry.hash);
+                        tree.sync_tree_to_dir(&file_path);
+                    }
+                }
+                _ => {
+                    println!("Unknown object type: {}", entry.hash);
+                    std::process::exit(1);
+                }
+            }
+        }
     }
 }
