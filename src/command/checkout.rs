@@ -21,7 +21,6 @@ fn read_dir_to_set(dir: &str) -> HashSet<String> {
         } else {
             dir_files.insert(entry.file_name().to_string_lossy().to_string());
         }
-        println!("{}", path.display());
     }
     dir_files
 }
@@ -70,10 +69,7 @@ pub fn checkout(args: &Vec<String>) {
     }
     let branch = &args[2];
     let head = head::Head::from_branch(&branch);
-    println!("head, {}", head.head_hash);
     let commit = commit::Commit::from_hash(&head.head_hash);
-    println!("commit, {}", commit.hash);
-    println!("tree, {}", commit.tree);
     let tree = tree::Tree::from_hash(&commit.tree);
     load_dir(".", &tree);
 }
