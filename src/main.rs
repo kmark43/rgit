@@ -22,5 +22,8 @@ fn main() {
         Tree::from_hash(&args[2]);
     } else if args[1] == "ls-tree-folder" {
         Tree::hash_folder(&args[2]);
+    } else {
+        println!("Unknown command: {}", args[1]);
+        process::exit(1);
     }
 }
