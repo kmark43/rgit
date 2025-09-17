@@ -29,7 +29,7 @@ fn read_dir_to_set(dir: &str) -> HashSet<String> {
 fn load_dir(path: &str, tree: &tree::Tree) {
     let tree_files = tree.entries.iter().map(|entry| entry.name.clone()).collect::<HashSet<String>>();
     println!("tree files - {:?}", tree_files);
-    let dir_files = read_dir_to_set(".");
+    let dir_files = read_dir_to_set(&path);
     let delete_files = &dir_files - &tree_files;
     println!("delete files - {:?}", delete_files);
     // for file in delete_files {
