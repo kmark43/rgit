@@ -30,10 +30,11 @@ fn load_dir(path: &str, tree: &tree::Tree) {
     let dir_files = read_dir_to_set(&path);
     let delete_files = &dir_files - &tree_files;
     for file in delete_files {
-        if std::fs::metadata(&file).unwrap().is_dir() {
-            std::fs::remove_dir_all(file).unwrap();
+        let file_path = format!("{}/{}", path, file);
+        if std::fs::metadata(&file_path).unwrap().is_dir() {
+            std::fs::remove_dir_all(file_path).unwrap();
         } else {
-            std::fs::remove_file(file).unwrap();
+            std::fs::remove_file(file_path).unwrap();
         }
     }
     for entry in tree.entries.iter() {
