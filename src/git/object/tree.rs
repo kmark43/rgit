@@ -6,8 +6,8 @@ use bstr::ByteVec;
 use flate2::read::ZlibDecoder;
 use sha1::{Sha1, Digest};
 
-use crate::object::blob::{compute_file_hash, Blob};
-use crate::object::objectreader::ObjectReader;
+use crate::git::object::blob::{compute_file_hash, Blob};
+use crate::git::object::objectreader::ObjectReader;
 use crate::object_finder;
 
 #[derive(Debug)]

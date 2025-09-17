@@ -1,11 +1,10 @@
 use std::env;
 use std::process;
 
-use crate::object::tree::Tree;
+use crate::git::object::tree::Tree;
 
-mod object;
+mod git;
 mod object_finder;
-mod head;
 mod command;
 
 fn main() {

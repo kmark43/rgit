@@ -1,8 +1,8 @@
 use std::process;
 
-use crate::head;
-use crate::object::commit;
-use crate::object::tree;
+use crate::git::head;
+use crate::git::object::commit;
+use crate::git::object::tree;
 
 pub fn checkout(args: &Vec<String>) {
     if args.len() != 3 {
