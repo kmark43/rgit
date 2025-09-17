@@ -1,10 +1,10 @@
 use std::process;
 
 use crate::head;
-use crate::object::blob::Blob;
+use crate::object::blob::{compute_file_hash, Blob};
 use crate::object::commit;
 use crate::object::objectreader::ObjectReader;
-use crate::object::tree;
+use crate::object::tree::{self, Tree};
 use std::collections::HashSet;
 
 fn read_dir_to_set(dir: &str) -> HashSet<String> {
@@ -46,12 +46,16 @@ fn load_dir(path: &str, tree: &tree::Tree) {
         let file_path = format!("{}/{}", path, entry.name.clone());
         match ObjectReader::find_object_type(&entry.hash) {
             "blob" => {
-                std::fs::write(&file_path, Blob::from_hash(&entry.hash).content).unwrap();
+                if compute_file_hash(&file_path) != entry.hash {
+                    std::fs::write(&file_path, Blob::from_hash(&entry.hash).content).unwrap();
+                }
             }
             "tree" => {
-                std::fs::create_dir_all(&file_path).unwrap();
-                let tree = tree::Tree::from_hash(&entry.hash);
-                load_dir(&file_path, &tree);
+                if Tree::hash_folder(&file_path) != entry.hash {
+                    std::fs::create_dir_all(&file_path).unwrap();
+                    let tree = tree::Tree::from_hash(&entry.hash);
+                    load_dir(&file_path, &tree);
+                }
             }
             _ => {
                 println!("Unknown object type: {}", entry.hash);
