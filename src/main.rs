@@ -13,10 +13,9 @@ fn main() {
         println!("Usage: {} <command>", args[0]);
         process::exit(1);
     }
-    // if args[1] == "log" {
-    //     command::log::log(&args);
-    // }
-    if args[1] == "checkout" {
+    if args[1] == "log" {
+        command::log::log(&args);
+    } else if args[1] == "checkout" {
         command::checkout::checkout(&args);
     } else if args[1] == "ls-tree" {
         Tree::from_hash(&args[2]);
