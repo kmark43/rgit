@@ -113,8 +113,6 @@ impl Tree {
         hex::encode(&hash)
     }
 
-
-
     fn read_dir_to_set(dir: &str) -> HashSet<String> {
         let dir = std::fs::read_dir(dir).unwrap();
         let mut dir_files = HashSet::<String>::new();
