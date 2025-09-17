@@ -34,6 +34,7 @@ impl Head {
 
     pub fn update_head_to_branch(branch: &str) {
         std::fs::write(".git/HEAD", format!("ref: refs/heads/{}", branch)).unwrap();
+        std::fs::remove_file(".git/index").unwrap();
     }
 
     pub fn from_head() -> Self {
