@@ -74,4 +74,5 @@ pub fn checkout(args: &Vec<String>) {
     let commit = commit::Commit::from_hash(&head.head_hash);
     let tree = tree::Tree::from_hash(&commit.tree);
     load_dir(".", &tree);
+    head::Head::update_head_to_branch(&branch);
 }

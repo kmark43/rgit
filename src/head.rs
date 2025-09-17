@@ -32,6 +32,10 @@ impl Head {
         Self::from_file(&ref_path)
     }
 
+    pub fn update_head_to_branch(branch: &str) {
+        std::fs::write(".git/HEAD", format!("ref: refs/heads/{}", branch)).unwrap();
+    }
+
     pub fn from_head() -> Self {
         let file = File::open(Path::new(".git/HEAD")).unwrap();
         let mut reader = BufReader::new(file);
