@@ -54,7 +54,6 @@ impl Tree {
             }
             bytes.extend_from_slice(&buffer[..bytes_read]);
         }
-        println!("{}", String::from_utf8_lossy(&bytes));
         let mut entries = Vec::new();
         let mut i = bytes.iter().position(|&x| x == b'\0').unwrap() + 1;
         while i < bytes.len() {
@@ -84,12 +83,12 @@ impl Tree {
         } else {
             let mode = "40000".to_string();
             let name = entry.file_name().to_string_lossy().to_string();
-            let hash = Tree::hash_folder(&entry.path().to_string_lossy(), false);
+            let hash = Tree::hash_folder(&entry.path().to_string_lossy());
             TreeEntry::new(mode, name, hash)
         }
     }
     
-    pub fn hash_folder(folder: &str, show_tree: bool) -> String {
+    pub fn hash_folder(folder: &str) -> String {
         let mut hash = Sha1::new();
         let mut tree_bytes = Vec::new();
         let mut entries = Vec::new();
@@ -107,14 +106,8 @@ impl Tree {
         }
         let header = format!("tree {}\0", tree_bytes.len());
         tree_bytes.insert_str(0, header);
-        if show_tree {
-            println!("{}", String::from_utf8_lossy(&tree_bytes));
-        }
         hash.update(tree_bytes);
         let hash = hash.finalize();
-        if show_tree {
-            println!("hash: {}", hex::encode(&hash));
-        }
         hex::encode(&hash)
     }
 }

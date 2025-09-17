@@ -22,6 +22,6 @@ fn main() {
     } else if args[1] == "ls-tree" {
         Tree::from_hash(&args[2]);
     } else if args[1] == "ls-tree-folder" {
-        Tree::hash_folder(&args[2], true);
+        Tree::hash_folder(&args[2]);
     }
 }
