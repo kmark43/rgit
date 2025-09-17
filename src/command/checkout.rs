@@ -1,4 +1,5 @@
-use std::process;
+use std::path::Path;
+use std::{fs, process};
 
 use crate::head;
 use crate::object::blob::{compute_file_hash, Blob};
@@ -44,12 +45,12 @@ fn load_dir(path: &str, tree: &tree::Tree) {
         let file_path = format!("{}/{}", path, entry.name.clone());
         match ObjectReader::find_object_type(&entry.hash) {
             "blob" => {
-                if compute_file_hash(&file_path) != entry.hash {
+                if !Path::new(&file_path).exists() || compute_file_hash(&file_path) != entry.hash {
                     std::fs::write(&file_path, Blob::from_hash(&entry.hash).content).unwrap();
                 }
             }
             "tree" => {
-                if Tree::hash_folder(&file_path) != entry.hash {
+                if !Path::new(&file_path).exists() || Tree::hash_folder(&file_path) != entry.hash {
                     std::fs::create_dir_all(&file_path).unwrap();
                     let tree = tree::Tree::from_hash(&entry.hash);
                     load_dir(&file_path, &tree);
