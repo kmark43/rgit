@@ -1,8 +1,6 @@
 use std::env;
 use std::process;
 
-use crate::git::object::tree::Tree;
-
 mod git;
 mod object_finder;
 mod command;
@@ -17,10 +15,10 @@ fn main() {
         command::log::log(&args);
     } else if args[1] == "checkout" {
         command::checkout::checkout(&args);
-    } else if args[1] == "ls-tree" {
-        Tree::from_hash(&args[2]);
-    } else if args[1] == "ls-tree-folder" {
-        Tree::hash_folder(&args[2]);
+    } else if args[1] == "status" {
+        command::status::status(&args);
+    } else if args[1] == "read-index" {
+        command::read_index::read_index(&args);
     } else {
         println!("Unknown command: {}", args[1]);
         process::exit(1);
