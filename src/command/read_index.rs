@@ -6,5 +6,5 @@ pub fn read_index(args: &Vec<String>) {
         std::process::exit(1);
     }
     let index = index::Index::read_index();
-    // println!("{}", index.format_index());
+    println!("{:?}", index);
 }
