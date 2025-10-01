@@ -19,6 +19,8 @@ fn main() {
         command::status::status(&args);
     } else if args[1] == "read-index" {
         command::read_index::read_index(&args);
+    } else if args[1] == "read-tree" {
+        command::read_tree::read_tree(&args);
     } else {
         println!("Unknown command: {}", args[1]);
         process::exit(1);

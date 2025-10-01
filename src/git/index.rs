@@ -77,4 +77,8 @@ impl Index {
         }
         Self::new(version.unwrap(), entries)
     }
+
+    pub fn get_entry(&self, name: &str) -> Option<&IndexEntry> {
+        self.entries.iter().find(|entry| entry.name == name)
+    }
 }

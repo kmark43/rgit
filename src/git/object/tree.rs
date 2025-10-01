@@ -6,6 +6,7 @@ use bstr::ByteVec;
 use flate2::read::ZlibDecoder;
 use sha1::{Sha1, Digest};
 
+use crate::git::gitignore::GitIgnore;
 use crate::git::object::blob::{compute_file_hash, Blob};
 use crate::git::object::objectreader::ObjectReader;
 use crate::object_finder;
@@ -23,6 +24,7 @@ impl TreeEntry {
     }
 }
 
+#[derive(Debug)]
 pub struct Tree {
     pub hash: String,
     pub entries: Vec<TreeEntry>,
@@ -94,9 +96,10 @@ impl Tree {
         let mut hash = Sha1::new();
         let mut tree_bytes = Vec::new();
         let mut entries = Vec::new();
+        let gitignore = GitIgnore::from_file();
         for entry in fs::read_dir(folder).unwrap() {
             let entry = entry.unwrap();
-            if vec![".git", "target"].contains(&entry.file_name().to_string_lossy().as_ref()) {
+            if vec![".git"].contains(&entry.file_name().to_string_lossy().as_ref()) || gitignore.is_ignored(&entry.path().to_string_lossy()[2..]) {
                 continue;
             }
             let entry = Tree::read_dir_entry(&entry);
@@ -112,14 +115,40 @@ impl Tree {
         let hash = hash.finalize();
         hex::encode(&hash)
     }
+    
+    pub fn from_folder(folder: &str) -> Self {
+        let mut hash = Sha1::new();
+        let mut tree_bytes = Vec::new();
+        let mut entries = Vec::new();
+        let gitignore = GitIgnore::from_file();
+        for entry in fs::read_dir(folder).unwrap() {
+            let entry = entry.unwrap();
+            if vec![".git"].contains(&entry.file_name().to_string_lossy().as_ref()) || gitignore.is_ignored(&entry.path().to_string_lossy()[2..]) {
+                continue;
+            }
+            let entry = Tree::read_dir_entry(&entry);
+            entries.push(entry);
+        }
+        entries.sort_by(|a, b| a.name.cmp(&b.name));
+        for entry in &entries {
+            tree_bytes.extend_from_slice(&Tree::write_dir_entry(&entry));
+        }
+        let header = format!("tree {}\0", tree_bytes.len());
+        tree_bytes.insert_str(0, header);
+        hash.update(tree_bytes);
+        let hash = hash.finalize();
+        let hash = hex::encode(&hash);
+        Self::new(hash, entries)
+    }
 
     fn read_dir_to_set(dir: &str) -> HashSet<String> {
         let dir = std::fs::read_dir(dir).unwrap();
         let mut dir_files = HashSet::<String>::new();
+        let gitignore = GitIgnore::from_file();
         for entry in dir {
             let entry = entry.unwrap();
             let path = entry.path();
-            if vec![".git", "target"].contains(&path.file_name().unwrap().to_string_lossy().as_ref()) {
+            if vec![".git"].contains(&path.file_name().unwrap().to_string_lossy().as_ref()) || gitignore.is_ignored(&entry.path().to_string_lossy()[2..]) {
                 continue;
             }
             if path.is_file() {
