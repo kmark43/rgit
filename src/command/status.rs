@@ -1,23 +1,18 @@
 use std::collections::HashSet;
 use std::fs;
+use std::time::SystemTime;
 
 use crate::git::gitignore::GitIgnore;
 use crate::git::head::Head;
 use crate::git::index::Index;
+use crate::git::object::blob::compute_file_hash;
 use crate::git::object::commit::Commit;
 use crate::git::object::tree::Tree;
 
-// Grab files
 fn get_untracked_files(index: &Index, gitignore: &GitIgnore) -> Vec<String> {
     let mut untracked_files = Vec::new();
     let mut tracked_directories = HashSet::new();
     let mut tracked_files = HashSet::new();
-    // for entry in fs::read_dir(".").unwrap() {
-    //     let entry = entry.unwrap();
-    //     if !gitignore.is_ignored(&entry.path().to_string_lossy()[2..]) {
-    //         untracked_files.push(entry.path().to_string_lossy()[2..].to_string());
-    //     }
-    // }
     tracked_directories.insert(".".to_string());
     for entry in index.entries.iter() {
         if !gitignore.is_ignored(&entry.name) {
@@ -58,6 +53,44 @@ fn get_untracked_files(index: &Index, gitignore: &GitIgnore) -> Vec<String> {
     untracked_files
 }
 
+
+#[derive(Debug)]
+enum FileStatus {
+    Modified,
+    Deleted,
+}
+
+#[derive(Debug)]
+struct UnstagedFile {
+    pub path: String,
+    pub status: FileStatus,
+}
+
+impl UnstagedFile {
+    pub fn new(path: String, status: FileStatus) -> Self {
+        Self { path, status }
+    }
+}
+
+fn get_unstaged_files(commit: &Commit, index: &Index, gitignore: &GitIgnore) -> Vec<UnstagedFile> {
+    let mut unstaged_files = Vec::new();
+    let commit_timestamp = commit.timestamp.parse::<u64>().unwrap();
+    for entry in index.entries.iter() {
+        if !fs::exists(&entry.name).unwrap() {
+            unstaged_files.push(UnstagedFile::new(entry.name.clone(), FileStatus::Deleted));
+            continue;
+        }
+        let modified_time = fs::metadata(&entry.name).unwrap().modified().unwrap()
+                    .duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+        if !gitignore.is_ignored(&entry.name) && modified_time > commit_timestamp {
+            if entry.sha1 != compute_file_hash(&entry.name) {
+                unstaged_files.push(UnstagedFile::new(entry.name.clone(), FileStatus::Modified));
+            }
+        }
+    }
+    unstaged_files
+}
+
 pub fn status(args: &Vec<String>) {
     if args.len() != 2 {
         println!("Usage: {} status", args[0]);
@@ -72,6 +105,7 @@ pub fn status(args: &Vec<String>) {
     // let tracked_directories = index.entries.iter()
     // let untracked_files = 
     println!("On branch {}", head.ref_path.file_name().unwrap().to_string_lossy());
+    println!("Unstaged files {:?}", get_unstaged_files(&commit, &index, &gitignore));
     println!("untracked files {:?}", untracked_files);
     // println!("Your branch is up to date with 'origin/main'.");
     // println!("Changes to be committed:");
