@@ -34,6 +34,31 @@ impl Blob {
         bytes = bytes[null_pos.unwrap() + 1..].to_vec();
         Self::new(hash.to_string(), bytes)
     }
+
+    pub fn from_file(path: &str) -> Self {
+        let metadata = fs::metadata(path).unwrap();
+        let mut sha1 = Sha1::new();
+        let file = File::open(&path).unwrap();
+        let mut bytes = Vec::new();
+        let mut reader = BufReader::new(file);
+        
+        let header = format!("blob {}\0", metadata.len());
+        sha1.update(header);
+
+        loop {
+            let buffer = reader.fill_buf().unwrap();
+            if buffer.is_empty() {
+                break;
+            }
+            sha1.update(buffer);
+            let bytes_read = buffer.len();
+            bytes.extend_from_slice(&buffer[..bytes_read]);
+            reader.consume(bytes_read);
+        }
+        let hash = sha1.finalize();
+        let hash = hex::encode(&hash);
+        Self::new(hash, bytes)
+    }
 }
 
 pub fn compute_file_hash(path: &str) -> String {
